@@ -1,0 +1,26 @@
+#include "stm32f1xx.h"
+#include "controller.h"
+
+void hal::Controller::initClock_()
+{
+    //Clock ben trong max speed 48Mhz system
+    /*RCC->CR*/
+    RCC->CR |= RCC_CR_HSION;
+    while(!(RCC->CR & RCC_CR_HSIRDY)){;}        // check flag HSIRDY = 1
+
+    /*RCC->CFGR*/
+    RCC->CFGR &= ~RCC_CFGR_PLLSRC;              // 0: HSI oscillator clock / 2 selected as PLL input clock
+    RCC->CFGR |= RCC_CFGR_PLLMULL12;            // Nhan tan trong PLL
+    RCC->CFGR |= RCC_CFGR_SW_PLL;               // Clock PLL lam dau vao cho Clock system mux
+    while ((RCC->CR & RCC_CFGR_SWS_PLL)){;}
+
+    RCC->CFGR &= ~RCC_CFGR_HPRE;                // He so chia AHB prescaler = 0 la chia 1
+    RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;           // 100: HCLK divided by 2
+    RCC->CFGR &= ~RCC_CFGR_PPRE2;               // 0xx: HCLK not divided
+
+    /*ADC prescaler clock 12Mhz*/
+    RCC->CFGR |= RCC_CFGR_ADCPRE_0;             // 01: PCLK2 divided by 4
+
+    RCC->CR |= RCC_CR_PLLON;                    // 1: PLL ON
+    while(!(RCC->CR & RCC_CR_PLLRDY)){;}        // check flag PLLRDY = 1
+}
